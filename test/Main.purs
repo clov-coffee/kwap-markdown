@@ -12,26 +12,7 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Exception (Error)
 import Kwap.Concept as Concept
-import Kwap.Markdown
-  ( Anchor(..)
-  , CodeFence(..)
-  , CodeFenceFileType(..)
-  , Document(..)
-  , Element(..)
-  , Heading(..)
-  , List(..)
-  , ListToken(..)
-  , Span(..)
-  , Text(..)
-  , Token(..)
-  , codeFenceP
-  , documentP
-  , headingP
-  , listP
-  , spanP
-  , textP
-  , tokenP
-  )
+import Kwap.Markdown (Anchor(..), CodeFence(..), CodeFenceFileType(..), Document(..), Element(..), Heading(..), List(..), ListToken(..), Span(..), Text(..), Token(..), codeFenceP, commentP, documentP, headingP, listP, spanP, textP, tokenP)
 import Parsing (Parser, runParser)
 import Test.Spec (describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
@@ -56,6 +37,13 @@ main =
     launchAff_
       $ runSpec [ consoleReporter ] do
           describe "markdown" do
+            describe "comment" do
+              it "should parse comment" do
+                testParser (commentP) "<!-- foo -->" "foo"
+              it "should parse comment" do
+                testParser (commentP) "<!--foo-->" "foo"
+              it "should parse comment" do
+                testParser (commentP) "<!-- foo \n bar -->" "foo \n bar"
             describe "text" do
               it "should parse unstyled text" do
                 testParser (spanP []) "foo"

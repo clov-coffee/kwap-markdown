@@ -9,23 +9,14 @@ import Data.Foldable (foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Show.Generic (genericShow)
+import Data.String (trim)
 import Data.String as String
 import Data.String.NonEmpty as NES
 import Data.String.NonEmpty.CodeUnits (fromNonEmptyCharArray)
 import Data.Tuple (fst)
 import Kwap.Concept as Concept
 import Parsing (Parser)
-import Parsing.Combinators
-  ( advance
-  , choice
-  , lookAhead
-  , many
-  , many1Till_
-  , notFollowedBy
-  , optionMaybe
-  , optional
-  , try
-  )
+import Parsing.Combinators (advance, choice, lookAhead, many, many1Till_, notFollowedBy, optionMaybe, optional, try)
 import Parsing.Combinators.Array as CombinatorArray
 import Parsing.String (anyChar, anyTill, char, eof, string)
 import Parsing.String.Basic (digit, lower)
@@ -77,6 +68,7 @@ data Element
   | ElementCodeFence CodeFence
   | ElementSpan Span
   | ElementList List
+  | ElementComment String
 
 data Document = Document (Array Element)
 
@@ -127,6 +119,13 @@ elementP =
     <|> (listP <#> ElementList)
     <|> (codeFenceP <#> ElementCodeFence)
     <|> ((spanP []) <#> ElementSpan)
+    <|> (commentP <#> ElementComment)
+
+commentP :: Parser String String
+commentP = do
+  _ <- string "<!--"
+  t <- untilTokenStopOr <<< pure <<< Stop <<< string $ "-->"
+  pure <<< trim $ t
 
 data Indentation = IndentSpaces Int
 
@@ -138,19 +137,6 @@ indentP i@(IndentSpaces n) = try $ do
 derive instance genericIndent :: Generic Indentation _
 instance showIndent :: Show Indentation where
   show = genericShow
-
-olP :: Array Indentation -> Parser String List
-olP indents =
-  OrderedList <$> CombinatorArray.many1 do
-    (IndentSpaces spaces) <- choice $ map indentP indents
-    _ <- choice [ string "* ", string "- " ]
-    span <- spanP [ Stop $ string "\n" ]
-    child <- optionMaybe
-      (listP_ [ IndentSpaces (spaces + 3), IndentSpaces (spaces + 2) ])
-    pure $
-      case child of
-        Just child' -> ListTokenSpanSublist span child'
-        Nothing -> ListTokenSpan span
 
 listRootIndentation :: Array Indentation
 listRootIndentation = [ IndentSpaces 2, IndentSpaces 1 ]

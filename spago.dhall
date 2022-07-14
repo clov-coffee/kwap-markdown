@@ -1,4 +1,4 @@
-{ name = "kwap"
+{ name = "kwap-rs"
 , dependencies =
   [ "aff"
   , "arrays"

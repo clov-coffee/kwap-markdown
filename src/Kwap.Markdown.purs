@@ -16,7 +16,17 @@ import Data.String.NonEmpty.CodeUnits (fromNonEmptyCharArray)
 import Data.Tuple (fst)
 import Kwap.Concept as Concept
 import Parsing (Parser)
-import Parsing.Combinators (advance, choice, lookAhead, many, many1Till_, notFollowedBy, optionMaybe, optional, try)
+import Parsing.Combinators
+  ( advance
+  , choice
+  , lookAhead
+  , many
+  , many1Till_
+  , notFollowedBy
+  , optionMaybe
+  , optional
+  , try
+  )
 import Parsing.Combinators.Array as CombinatorArray
 import Parsing.String (anyChar, anyTill, char, eof, string)
 import Parsing.String.Basic (digit, lower)
@@ -138,13 +148,14 @@ elementP =
   (headingP <#> ElementHeading)
     <|> (listP <#> ElementList)
     <|> (codeFenceP <#> ElementCodeFence)
-    <|> ((spanP []) <#> ElementSpan)
     <|> (commentP <#> ElementComment)
+    <|> ((spanP []) <#> ElementSpan)
 
 commentP :: Parser String String
 commentP = do
   _ <- string "<!--"
   t <- untilTokenStopOr <<< pure <<< Stop <<< string $ "-->"
+  _ <- optional $ string "\n"
   pure <<< trim $ t
 
 data Indentation = IndentSpaces Int

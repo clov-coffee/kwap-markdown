@@ -12,7 +12,27 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Exception (Error)
 import Kwap.Concept as Concept
-import Kwap.Markdown (Anchor(..), CodeFence(..), CodeFenceFileType(..), Document(..), Element(..), Heading(..), List(..), ListToken(..), Span(..), Text(..), Token(..), codeFenceP, commentP, documentP, headingP, listP, spanP, textP, tokenP)
+import Kwap.Markdown
+  ( Anchor(..)
+  , CodeFence(..)
+  , CodeFenceFileType(..)
+  , Document(..)
+  , Element(..)
+  , Heading(..)
+  , List(..)
+  , ListToken(..)
+  , Span(..)
+  , Text(..)
+  , Token(..)
+  , codeFenceP
+  , commentP
+  , documentP
+  , headingP
+  , listP
+  , spanP
+  , textP
+  , tokenP
+  )
 import Parsing (Parser, runParser)
 import Test.Spec (describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
@@ -332,7 +352,8 @@ main =
                   documentP
                   ( String.joinWith
                       "\n"
-                      [ "# hello"
+                      [ "<!-- funny comment -->"
+                      , "# hello"
                       , "this is my **markdown** document\n"
                       , "`it has code` _and style_\n"
                       , " - foo"
@@ -346,7 +367,8 @@ main =
                       ]
                   )
                   $ Document
-                      [ ElementHeading
+                      [ ElementComment "funny comment"
+                      , ElementHeading
                           ( H1
                               ( Span
                                   ( NonEmptyArray

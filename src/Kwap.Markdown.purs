@@ -47,7 +47,7 @@ textString (InlineCode s) = s
 
 data Anchor
   = Anchor (NEA.NonEmptyArray Text) String
-  | ConceptAnchor (NEA.NonEmptyArray Text) Concept.Alias
+  | ConceptAnchor (NEA.NonEmptyArray Text) Concept.Ident
 
 anchorString :: Anchor -> String
 anchorString (Anchor ts _) = fold (textString <$> ts)
@@ -248,7 +248,7 @@ anchorP = do
   href <- untilTokenStopOr <<< pure <<< Stop <<< string $ ")"
   let text = combineUnstyled Just identity label
   pure $ maybe (Anchor text href)
-    (const <<< ConceptAnchor text <<< Concept.Alias $ href)
+    (const <<< ConceptAnchor text <<< Concept.Ident $ href)
     at
 
 data Wrap

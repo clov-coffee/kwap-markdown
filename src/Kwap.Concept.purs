@@ -4,30 +4,28 @@ module Kwap.Concept
   , decls
   , declOfRecord
   , pathString
-  , aliasString
+  , identString
   , titleString
   , path
-  , alias
+  , ident
   , title
   , Path(..)
-  , Alias(..)
+  , Ident(..)
   , Title(..)
   ) where
 
 import Prelude
 
-import Data.Maybe (Maybe, fromMaybe)
+newtype Ident = Ident String
 
-newtype Alias = Alias String
+derive newtype instance showIdent :: Show Ident
+derive newtype instance eqIdent :: Eq Ident
+derive newtype instance ordIdent :: Ord Ident
+derive newtype instance semiIdent :: Semigroup Ident
+derive newtype instance monoidIdent :: Monoid Ident
 
-derive newtype instance showAlias :: Show Alias
-derive newtype instance eqAlias :: Eq Alias
-derive newtype instance ordAlias :: Ord Alias
-derive newtype instance semiAlias :: Semigroup Alias
-derive newtype instance monoidAlias :: Monoid Alias
-
-aliasString :: Alias -> String
-aliasString (Alias s) = s
+identString :: Ident -> String
+identString (Ident s) = s
 
 newtype Path = Path String
 
@@ -54,16 +52,16 @@ titleString (Title s) = s
 newtype Decl = Decl
   { path :: Path
   , title :: Title
-  , alias :: Maybe Alias
+  , ident :: Ident
   }
 
 derive newtype instance eqOne :: Eq Decl
 derive newtype instance showOne :: Show Decl
 
 declOfRecord
-  :: { path :: String, title :: String, alias :: Maybe String } -> Decl
-declOfRecord { path: p, title: t, alias: a } = Decl
-  { path: Path p, title: Title t, alias: Alias <$> a }
+  :: { path :: String, title :: String, ident :: String } -> Decl
+declOfRecord { path: p, title: t, ident: a } = Decl
+  { path: Path p, title: Title t, ident: Ident a }
 
 path :: Decl -> Path
 path (Decl { path: p }) = p
@@ -71,8 +69,8 @@ path (Decl { path: p }) = p
 title :: Decl -> Title
 title (Decl { title: t }) = t
 
-alias :: Decl -> Alias
-alias (Decl { path: (Path p), alias: a }) = fromMaybe (Alias p) a
+ident :: Decl -> Ident
+ident (Decl { ident: i }) = i
 
 newtype Manifest = Manifest (Array Decl)
 

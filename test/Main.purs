@@ -112,7 +112,7 @@ main =
                 testParser (tokenP []) "[concept](@concept)"
                   $ AnchorToken
                   $ ConceptAnchor (pure $ Unstyled "concept")
-                      (Concept.Alias "concept")
+                      (Concept.Ident "concept")
               it "should parse [_**bold**_]   (cheese.com) link with spaces" do
                 testParser (tokenP []) "[**bold**]   (cheese.com)"
                   $ AnchorToken

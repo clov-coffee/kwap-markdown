@@ -1,7 +1,10 @@
 { name = "kwap-rs"
 , dependencies =
   [ "aff"
+  , "argonaut-core"
   , "arrays"
+  , "bifunctors"
+  , "codec-argonaut"
   , "control"
   , "effect"
   , "either"

@@ -12,15 +12,56 @@ module Kwap.Concept
   , Path(..)
   , Ident(..)
   , Title(..)
+  , manifestCodec
+  , decodeManifest
+  , encodeManifest
   ) where
 
 import Prelude
 
+import Data.Argonaut.Core (stringifyWithIndent) as Text.Json
+import Data.Argonaut.Parser (jsonParser) as Text.Json
+import Data.Bifunctor (lmap)
+import Data.Codec.Argonaut
+  ( JsonCodec
+  , array
+  , decode
+  , encode
+  , printJsonDecodeError
+  , string
+  ) as Text.Json
+import Data.Codec.Argonaut.Record (object) as Text.Json
+import Data.Either (Either)
+
+manifestCodec
+  :: Text.Json.JsonCodec
+       (Array { path :: String, title :: String, ident :: String })
+manifestCodec = Text.Json.array
+  $ Text.Json.object "Manifest"
+      { path: Text.Json.string
+      , title: Text.Json.string
+      , ident: Text.Json.string
+      }
+
+decodeManifest :: String -> Either String Manifest
+decodeManifest s = do
+  json <- Text.Json.jsonParser s
+  decls' <- lmap Text.Json.printJsonDecodeError $ Text.Json.decode
+    manifestCodec
+    json
+  pure $ Manifest $ declOfRecord <$> decls'
+
+encodeManifest :: Manifest -> String
+encodeManifest = Text.Json.stringifyWithIndent 2
+  <<< Text.Json.encode manifestCodec
+  <<< map declRecord
+  <<< decls
+
 newtype Ident = Ident String
 
-derive newtype instance showIdent :: Show Ident
 derive newtype instance eqIdent :: Eq Ident
 derive newtype instance ordIdent :: Ord Ident
+derive newtype instance showIdent :: Show Ident
 derive newtype instance semiIdent :: Semigroup Ident
 derive newtype instance monoidIdent :: Monoid Ident
 
@@ -62,6 +103,10 @@ declOfRecord
   :: { path :: String, title :: String, ident :: String } -> Decl
 declOfRecord { path: p, title: t, ident: a } = Decl
   { path: Path p, title: Title t, ident: Ident a }
+
+declRecord :: Decl -> { path :: String, title :: String, ident :: String }
+declRecord (Decl { path: (Path p), title: (Title t), ident: (Ident i) }) =
+  { path: p, title: t, ident: i }
 
 path :: Decl -> Path
 path (Decl { path: p }) = p

@@ -70,7 +70,10 @@ data Element
   | ElementList List
   | ElementComment String
 
-data Document = Document (Array Element)
+newtype Document = Document (Array Element)
+
+elements :: Document -> Array Element
+elements (Document a) = a
 
 newtype Stop = Stop (Parser String String)
 

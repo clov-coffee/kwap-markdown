@@ -5,7 +5,7 @@ import Prelude
 import Control.Alternative ((<|>))
 import Data.Array as Array
 import Data.Array.NonEmpty as NEA
-import Data.Foldable (foldl)
+import Data.Foldable (fold, foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Show.Generic (genericShow)
@@ -28,20 +28,37 @@ data Text
   | BoldItalic String
   | InlineCode String
 
+textString :: Text -> String
+textString (Unstyled s) = s
+textString (Bold s) = s
+textString (Italic s) = s
+textString (BoldItalic s) = s
+textString (InlineCode s) = s
+
 data Anchor
   = Anchor (NEA.NonEmptyArray Text) String
   | ConceptAnchor (NEA.NonEmptyArray Text) Concept.Alias
+
+anchorString :: Anchor -> String
+anchorString (Anchor ts _) = fold (textString <$> ts)
+anchorString (ConceptAnchor ts _) = fold (textString <$> ts)
 
 data Token
   = AnchorToken Anchor
   | TextToken Text
 
+tokenString :: Token -> String
+tokenString (AnchorToken a) = anchorString a
+tokenString (TextToken a) = textString a
+
 tokenText :: Token -> Maybe Text
 tokenText (TextToken t) = Just t
-
 tokenText _ = Nothing
 
 data Span = Span (NEA.NonEmptyArray Token)
+
+spanString :: Span -> String
+spanString (Span ts) = fold (tokenString <$> ts)
 
 data Heading
   = H1 Span

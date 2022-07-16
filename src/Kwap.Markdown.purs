@@ -37,6 +37,10 @@ data Text
   | Italic String
   | BoldItalic String
   | InlineCode String
+derive instance eqText :: Eq Text
+derive instance genericText :: Generic Text _
+instance showText :: Show Text where
+  show = genericShow
 
 textString :: Text -> String
 textString (Unstyled s) = s
@@ -48,6 +52,10 @@ textString (InlineCode s) = s
 data Anchor
   = Anchor (NEA.NonEmptyArray Text) String
   | ConceptAnchor (NEA.NonEmptyArray Text) Concept.Ident
+derive instance eqAnchor :: Eq Anchor
+derive instance genericAnchor :: Generic Anchor _
+instance showAnchor :: Show Anchor where
+  show = genericShow
 
 anchorString :: Anchor -> String
 anchorString (Anchor ts _) = fold (textString <$> ts)
@@ -56,6 +64,11 @@ anchorString (ConceptAnchor ts _) = fold (textString <$> ts)
 data Token
   = AnchorToken Anchor
   | TextToken Text
+derive instance eqToken :: Eq Token
+derive instance genericToken :: Generic Token _
+instance showToken :: Show Token where
+  show (AnchorToken an) = "AnchorToken (" <> show an <> ")"
+  show (TextToken text) = "TextToken (" <> show text <> ")"
 
 tokenString :: Token -> String
 tokenString (AnchorToken a) = anchorString a
@@ -66,6 +79,10 @@ tokenText (TextToken t) = Just t
 tokenText _ = Nothing
 
 data Span = Span (NEA.NonEmptyArray Token)
+derive instance eqSpan :: Eq Span
+derive instance genericSpan :: Generic Span _
+instance showSpan :: Show Span where
+  show = genericShow
 
 spanString :: Span -> String
 spanString (Span ts) = fold (tokenString <$> ts)
@@ -77,18 +94,40 @@ data Heading
   | H4 Span
   | H5 Span
   | H6 Span
+derive instance eqHeading :: Eq Heading
+derive instance genericHeading :: Generic Heading _
+instance showHeading :: Show Heading where
+  show = genericShow
 
 data CodeFenceFileType = CodeFenceFileType NES.NonEmptyString
+derive instance eqCodeFenceFileType :: Eq CodeFenceFileType
+derive instance genericCodeFenceFileType :: Generic CodeFenceFileType _
+instance showCodeFenceFileType :: Show CodeFenceFileType where
+  show = genericShow
 
 data CodeFence = CodeFence (Maybe CodeFenceFileType) String
+derive instance eqCodeFence :: Eq CodeFence
+derive instance genericCodeFence :: Generic CodeFence _
+instance showCodeFence :: Show CodeFence where
+  show = genericShow
 
 data ListToken
   = ListTokenSpan Span
   | ListTokenSpanSublist Span List
+derive instance eqListToken :: Eq ListToken
+instance showListToken :: Show ListToken where
+  show (ListTokenSpan s) = "ListTokenSpan (" <> show s <> ")"
+  show (ListTokenSpanSublist s l) = "ListTokenSpanSublist (" <> show s <> ") ("
+    <> show l
+    <> ")"
 
 data List
   = OrderedList (NEA.NonEmptyArray ListToken)
   | UnorderedList (NEA.NonEmptyArray ListToken)
+derive instance eqList :: Eq List
+instance showList :: Show List where
+  show (UnorderedList lts) = "UnorderedList (" <> show lts <> ")"
+  show (OrderedList lts) = "OrderedList (" <> show lts <> ")"
 
 data Element
   = ElementHeading Heading
@@ -96,8 +135,17 @@ data Element
   | ElementSpan Span
   | ElementList List
   | ElementComment String
+derive instance eqElement :: Eq Element
+derive instance genericElement :: Generic Element _
+instance showElement :: Show Element where
+  show = genericShow
 
 newtype Document = Document (Array Element)
+derive newtype instance documentEq :: Eq Document
+derive newtype instance documentSemi :: Semigroup Document
+derive newtype instance documentMoid :: Monoid Document
+instance showDocument :: Show Document where
+  show = genericShow
 
 elements :: Document -> Array Element
 elements (Document a) = a
@@ -322,62 +370,3 @@ textP stops =
           <#> NES.toString
           <#> Unstyled
       ]
-
-derive instance eqCodeFenceFileType :: Eq CodeFenceFileType
-derive instance eqCodeFence :: Eq CodeFence
-derive instance eqSpan :: Eq Span
-derive instance eqToken :: Eq Token
-derive instance eqText :: Eq Text
-derive instance eqHeading :: Eq Heading
-derive instance eqElement :: Eq Element
-derive instance eqDocument :: Eq Document
-derive instance eqAnchor :: Eq Anchor
-derive instance eqListToken :: Eq ListToken
-derive instance eqList :: Eq List
-derive instance genericCodeFenceFileType :: Generic CodeFenceFileType _
-derive instance genericCodeFence :: Generic CodeFence _
-derive instance genericSpan :: Generic Span _
-derive instance genericToken :: Generic Token _
-derive instance genericText :: Generic Text _
-derive instance genericHeading :: Generic Heading _
-derive instance genericElement :: Generic Element _
-derive instance genericDocument :: Generic Document _
-derive instance genericAnchor :: Generic Anchor _
-
-instance showCodeFenceFileType :: Show CodeFenceFileType where
-  show = genericShow
-
-instance showCodeFence :: Show CodeFence where
-  show = genericShow
-
-instance showSpan :: Show Span where
-  show = genericShow
-
-instance showText :: Show Text where
-  show = genericShow
-
-instance showHeading :: Show Heading where
-  show = genericShow
-
-instance showElement :: Show Element where
-  show = genericShow
-
-instance showDocument :: Show Document where
-  show = genericShow
-
-instance showAnchor :: Show Anchor where
-  show = genericShow
-
-instance showToken :: Show Token where
-  show (AnchorToken an) = "AnchorToken (" <> show an <> ")"
-  show (TextToken text) = "TextToken (" <> show text <> ")"
-
-instance showList :: Show List where
-  show (UnorderedList lts) = "UnorderedList (" <> show lts <> ")"
-  show (OrderedList lts) = "OrderedList (" <> show lts <> ")"
-
-instance showListToken :: Show ListToken where
-  show (ListTokenSpan s) = "ListTokenSpan (" <> show s <> ")"
-  show (ListTokenSpanSublist s l) = "ListTokenSpanSublist (" <> show s <> ") ("
-    <> show l
-    <> ")"

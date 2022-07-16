@@ -141,6 +141,7 @@ instance showElement :: Show Element where
   show = genericShow
 
 newtype Document = Document (Array Element)
+derive instance documentGeneric :: Generic Document _
 derive newtype instance documentEq :: Eq Document
 derive newtype instance documentSemi :: Semigroup Document
 derive newtype instance documentMoid :: Monoid Document

@@ -32,6 +32,7 @@ import Data.Codec.Argonaut
   ) as Text.Json
 import Data.Codec.Argonaut.Record (object) as Text.Json
 import Data.Either (Either)
+import Data.Hashable (class Hashable)
 
 manifestCodec
   :: Text.Json.JsonCodec
@@ -59,6 +60,7 @@ encodeManifest = Text.Json.stringifyWithIndent 2
 
 newtype Ident = Ident String
 
+derive newtype instance hashIdent :: Hashable Ident
 derive newtype instance eqIdent :: Eq Ident
 derive newtype instance ordIdent :: Ord Ident
 derive newtype instance showIdent :: Show Ident

@@ -11,8 +11,8 @@ import Data.String.NonEmpty.Internal (NonEmptyString(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Exception (Error)
-import Kwap.Concept as Concept
-import Kwap.Markdown
+import Toad.Concept as Concept
+import Toad.Markdown
   ( Anchor(..)
   , CodeFence(..)
   , CodeFenceFileType(..)

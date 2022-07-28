@@ -1,4 +1,4 @@
-module Kwap.Markdown where
+module Toad.Markdown where
 
 import Prelude
 
@@ -14,7 +14,7 @@ import Data.String as String
 import Data.String.NonEmpty as NES
 import Data.String.NonEmpty.CodeUnits (fromNonEmptyCharArray)
 import Data.Tuple (fst)
-import Kwap.Concept as Concept
+import Toad.Concept as Concept
 import Parsing (Parser)
 import Parsing.Combinators
   ( advance

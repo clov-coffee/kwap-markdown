@@ -1,4 +1,4 @@
-module Kwap.Concept
+module Toad.Concept
   ( Manifest(..)
   , Decl(..)
   , decls

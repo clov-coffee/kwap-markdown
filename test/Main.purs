@@ -3,14 +3,22 @@ module Test.Main where
 import Prelude
 
 import Control.Monad.Error.Class (class MonadThrow)
+import Data.Array (intercalate)
 import Data.Array.NonEmpty.Internal (NonEmptyArray(..))
 import Data.Either (either)
+import Data.Foldable (fold)
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.String.NonEmpty.Internal (NonEmptyString(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Exception (Error)
+import Parsing (Parser, runParser)
+import Parsing.Combinators.Array (many)
+import Test.Spec (describe, it, itOnly)
+import Test.Spec.Assertions (fail, shouldEqual)
+import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner (runSpec)
 import Toad.Concept as Concept
 import Toad.Markdown
   ( Anchor(..)
@@ -33,11 +41,6 @@ import Toad.Markdown
   , textP
   , tokenP
   )
-import Parsing (Parser, runParser)
-import Test.Spec (describe, it)
-import Test.Spec.Assertions (fail, shouldEqual)
-import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (runSpec)
 
 main :: Effect Unit
 main =
@@ -64,6 +67,7 @@ main =
                 testParser (commentP) "<!--foo-->" "foo"
               it "should parse comment" do
                 testParser (commentP) "<!-- foo \n bar -->" "foo \n bar"
+
             describe "text" do
               it "should parse unstyled text" do
                 testParser (spanP []) "foo"
@@ -97,6 +101,7 @@ main =
                 testParser (textP []) "**_foo**_" (BoldItalic "foo**_")
               it "should parse a **_bold italic_** edgecase" do
                 testParser (textP []) "_**foo_**" (BoldItalic "foo_**")
+
             describe "token" do
               it "should parse _italic_ text" do
                 testParser (tokenP []) "_foo_" (TextToken (Italic "foo"))
@@ -131,6 +136,7 @@ main =
                             ]
                         )
                         "cheese.com"
+
             describe "heading" do
               it "should parse # [h1](with link)" do
                 testParser headingP "# [**foo** stink](bar)"
@@ -177,12 +183,36 @@ main =
                   ( CodeFence (Just (CodeFenceFileType (NonEmptyString "rust")))
                       "pub fn main() {\n  println!(\"it works!\");\n}"
                   )
+
+              it "should parse 2 subsequent code fences" do
+                testParser (many codeFenceP)
+                  ( intercalate "\n"
+                      $
+                        [ "```rust"
+                        , "pub fn main() {"
+                        , "  println!(\"it works!\");"
+                        , "}```"
+                        , "```javascript"
+                        , "const foo = 'bar';"
+                        , "```"
+                        ]
+                  )
+                  ( [ CodeFence
+                        (Just (CodeFenceFileType (NonEmptyString "rust")))
+                        "pub fn main() {\n  println!(\"it works!\");\n}"
+                    , CodeFence
+                        (Just (CodeFenceFileType (NonEmptyString "javascript")))
+                        "const foo = 'bar';"
+                    ]
+                  )
+
               it "should parse code" do
                 testParser codeFenceP
                   "```\n\
                   \> echo 'foo'\n\
                   \```"
                   (CodeFence Nothing "> echo 'foo'")
+
             describe "ul / ol" do
               it "should parse ul" do
                 testParser
@@ -265,6 +295,7 @@ main =
                           ]
                       )
                   )
+
               it "should parse ol" do
                 testParser
                   listP
@@ -294,6 +325,7 @@ main =
                           ]
                       )
                   )
+
               it "should parse nested ol" do
                 testParser
                   listP
@@ -346,6 +378,7 @@ main =
                           ]
                       )
                   )
+
             describe "document" do
               it "should parse document" do
                 testParser
@@ -363,7 +396,13 @@ main =
                       , "pub fn main() {"
                       , "  println!(\"it works!\");"
                       , "}"
-                      , "```[check out my *website*](cheese.com)"
+                      , "```"
+                      , "```javascript"
+                      , "function foo() {"
+                      , "  console.log(\"bar\");"
+                      , "}"
+                      , "```"
+                      , "[check out my *website*](cheese.com)"
                       ]
                   )
                   $ Document
@@ -431,6 +470,15 @@ main =
                           ( CodeFence
                               (Just (CodeFenceFileType (NonEmptyString "rust")))
                               "pub fn main() {\n  println!(\"it works!\");\n}"
+                          )
+                      , ElementCodeFence
+                          ( CodeFence
+                              ( Just
+                                  ( CodeFenceFileType
+                                      (NonEmptyString "javascript")
+                                  )
+                              )
+                              "function foo() {\n  console.log(\"bar\");\n}"
                           )
                       , ElementSpan
                           ( Span

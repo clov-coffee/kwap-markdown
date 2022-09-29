@@ -14,8 +14,7 @@ import Data.String as String
 import Data.String.NonEmpty as NES
 import Data.String.NonEmpty.CodeUnits (fromNonEmptyCharArray)
 import Data.Tuple (fst)
-import Toad.Concept as Concept
-import Parsing (Parser)
+import Parsing (ParseState(..), Parser, getParserT)
 import Parsing.Combinators
   ( advance
   , choice
@@ -30,6 +29,7 @@ import Parsing.Combinators
 import Parsing.Combinators.Array as CombinatorArray
 import Parsing.String (anyChar, anyTill, char, eof, string)
 import Parsing.String.Basic (digit, lower)
+import Toad.Concept as Concept
 
 data Text
   = Unstyled String
@@ -204,7 +204,8 @@ documentP :: Parser String Document
 documentP = CombinatorArray.many elementP <#> Document
 
 elementP :: Parser String Element
-elementP =
+elementP = do
+  _ <- many $ string "\n"
   (headingP <#> ElementHeading)
     <|> (listP <#> ElementList)
     <|> (codeFenceP <#> ElementCodeFence)
@@ -214,7 +215,7 @@ elementP =
 commentP :: Parser String String
 commentP = do
   _ <- string "<!--"
-  t <- untilTokenStopOr <<< pure <<< Stop <<< string $ "-->"
+  t <- untilTokenStopOr <<< pure <<< Stop $ string "-->"
   _ <- optional $ string "\n"
   pure <<< trim $ t
 
@@ -265,16 +266,20 @@ listP = listP_ listRootIndentation
 
 codeFenceP :: Parser String CodeFence
 codeFenceP = do
+  _ <- many $ string "\n"
   _ <- string "```"
   fileType <- anyTill (string "\n") <#> fst
-  contents <- anyTill (optional (string "\n") *> string "```") <#> fst
+  contents <- anyTill (string "```") <#> fst <#> trim
+
   pure $ CodeFence (NES.fromString fileType <#> CodeFenceFileType) contents
 
 headingP :: Parser String Heading
 headingP =
   let
-    h pre ctor =
-      (string pre *> many (char ' ') *> spanP [ Stop $ string "\n" ] <#> ctor)
+    h pre ctor = do
+      _ <- string pre
+      _ <- many (char ' ')
+      spanP [ Stop $ string "\n" ] <#> ctor
   in
     h "######" H6
       <|> h "#####" H5
@@ -285,8 +290,10 @@ headingP =
 
 spanP :: Array Stop -> Parser String Span
 spanP stops =
-  many1Till_ (tokenP stops) (choice $ [ tokenStop ] <> stops <#> stop) <#>
-    (fst >>> NEA.fromFoldable1 >>> combineUnstyled tokenText TextToken >>> Span)
+  many1Till_
+    (tokenP stops)
+    (choice $ [ tokenStop ] <> stops <#> stop)
+    <#> (fst >>> NEA.fromFoldable1 >>> combineUnstyled tokenText TextToken >>> Span)
 
 tokenP :: Array Stop -> Parser String Token
 tokenP stops = (try anchorP <#> AnchorToken) <|>
